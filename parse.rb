@@ -54,9 +54,6 @@ delform.each_child do |element|
           print state text.br2lf
         end
       end
-
     end
-#  when element.text?
-#    if @cstate == STATE_THREAD then print state "Posted on #{element}" end
   end
 end
