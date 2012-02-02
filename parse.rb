@@ -1,14 +1,12 @@
 #!/usr/bin/env ruby
 
 require 'hpricot'
+require_relative './tree'
 
-STATE_BASE, STATE_THREAD, STATE_POST, STATE_POST_TEXT = 0, 1, 2, 3
-@cstate = STATE_BASE
-
-def state(e)
+def fmt(e)
   s = e.to_s
-  if s.size > 120 then s = s[0..120] + '...' end
-  ("  " * @cstate) + s + "\n"
+  if s.size > 120 then s = s[0..110] + '...' end
+  s
 end
 
 module Hpricot
@@ -24,36 +22,42 @@ module Hpricot
   end
 end
 
+tree = Tree::Root.new
+current_node = tree
+
 doc = Hpricot(File.open 'page.html')
 delform = doc.at 'form[@name=delform]'
 delform.each_child do |element|
   if element.elem?
     case
     when element['class'] == 'filesize' # <span class="filesize"> denotes beginning of thread lol
-      @cstate = STATE_THREAD
-      print state "Thread: #{element.at('a')['href']}"
+      current_node = Tree::Node.new(tree, fmt(element.at('a')['href']), "Thread")
+      tree << current_node
 
     when element['class'] == 'postername' # OP's post
-      @cstate = STATE_POST
-      print state "OP's post by #{element.inner_text}"
+      next_node = Tree::Node.new(current_node, fmt(element.inner_text), "OP's post")
+      current_node << next_node
+      current_node = next_node
 
     when element['class'] == 'posttime' # OP post timestamp
-      @cstate = STATE_POST
-      print state "Posted on #{element.inner_text}"
+      current_node.add_child(fmt(element.inner_text), "Posted on")
 
     when element.name == 'blockquote' # OP post text
-      @cstate = STATE_POST_TEXT
-      print state element.br2lf
+      current_node.add_child(fmt(element.br2lf), "Text")
 
     when element.name == 'table' # reply
       if (name = element.at('span.commentpostername')) != nil
-        @cstate = STATE_POST
-        print state "Reply by #{name.inner_text}"
+        current_node = current_node.parent
+        next_node = Tree::Node.new(current_node, fmt(name.inner_text), "Reply")
+        current_node << next_node
+        current_node = next_node
+
         if (text = element.at('blockquote')) != nil
-          @cstate = STATE_POST_TEXT
-          print state text.br2lf
+          current_node.add_child(fmt(text.br2lf), "Text")
         end
       end
     end
   end
 end
+
+tree.print_all

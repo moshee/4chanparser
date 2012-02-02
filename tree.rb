@@ -16,7 +16,7 @@ module Tree
     attr_accessor :index
 
     def add_child(value, type)
-      super Node.new(self, value, type)
+      push Node.new(self, value, type)
     end
 
     def inspect
