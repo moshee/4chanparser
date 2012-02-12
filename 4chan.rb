@@ -23,8 +23,7 @@ module FourChan
       total_age_seconds = age
       hours = (total_age_seconds % (60*60*24)) / 3600
       minutes = (total_age_seconds % (60*60)) / 60
-      seconds = total_age_seconds % 60
-      puts "- Thread age: #{hours} hours, #{minutes} minutes, #{seconds} seconds"
+      puts "- Thread age: #{hours} hours, #{minutes} minutes"
     end
 
     def count_pics
