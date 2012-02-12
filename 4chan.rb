@@ -16,14 +16,15 @@ module FourChan
 
     def report
       puts "Number of replies: #{@replies.length}"
-      puts "- Image replies: #{count_pics}"
-      puts "- Sages: #{count_sages}"
-      puts "- Top words: #{top_words.join(' ')}"
+      puts "Image replies: #{count_pics}"
+      puts "Sages: #{count_sages}"
+      puts "Top words: #{top_words.join(' ')}"
 
       total_age_seconds = age
       hours = (total_age_seconds % (60*60*24)) / 3600
       minutes = (total_age_seconds % (60*60)) / 60
-      puts "- Thread age: #{hours} hours, #{minutes} minutes"
+      puts "Thread age: #{hours} hours, #{minutes} minutes"
+      puts "Average time between posts: #{'%.2f' % ((avg_post_freq % (60*60)) / 60)} minutes"
     end
 
     def count_pics
@@ -37,6 +38,14 @@ module FourChan
     def top_words(n=10)
       words = @replies.map(&:body_text).join(' ').split(' ')
       words.uniq.sort_by { |word| words.count word }.reverse.take(n)
+    end
+
+    def avg_post_freq
+      if (n = @replies.length) <= 1
+        return 0
+      else
+        return (1..(n-1)).map { |x| @replies[x].time - @replies[x-1].time }.reduce(:+) / n
+      end
     end
 
     def age
