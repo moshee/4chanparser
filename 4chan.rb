@@ -16,13 +16,32 @@ module FourChan
 
     def report
       puts "Number of replies: #{@replies.length}"
-      pics = @replies.map { |reply| reply.pic.to_s == "" ? 0 : 1 }.reduce(:+)
-      puts "- Image replies: #{pics}"
-      sages = @replies.map { |reply| reply.poster_email.to_s == "sage" ? 1 : 0 }.reduce(:+)
-      puts "- Sages: #{sages}"
-      words = @replies.map(&:body_text).join(' ').split(' ')
-      top_words = words.uniq.sort_by { |word| words.count word }.reverse.take(10)
+      puts "- Image replies: #{count_pics}"
+      puts "- Sages: #{count_sages}"
       puts "- Top words: #{top_words.join(' ')}"
+
+      total_age_seconds = age
+      hours = (total_age_seconds % (60*60*24)) / 3600
+      minutes = (total_age_seconds % (60*60)) / 60
+      seconds = total_age_seconds % 60
+      puts "- Thread age: #{hours} hours, #{minutes} minutes, #{seconds} seconds"
+    end
+
+    def count_pics
+      @replies.map { |reply| reply.pic.to_s == "" ? 0 : 1 }.reduce(:+)
+    end
+
+    def count_sages
+      @replies.map { |reply| reply.poster_email.to_s == "sage" ? 1 : 0 }.reduce(:+) 
+    end
+
+    def top_words(n=10)
+      words = @replies.map(&:body_text).join(' ').split(' ')
+      words.uniq.sort_by { |word| words.count word }.reverse.take(n)
+    end
+
+    def age
+      (@replies[-1].time - @replies[0].time).to_i
     end
 
     def put
@@ -44,6 +63,11 @@ module FourChan
 
     attr_accessor :poster_name, :body_text, :pic, :posted_on, :id, :title
     attr_accessor :poster_email, :poster_trip
+
+    def time
+      @posted_on =~ %r~(\d\d)/(\d\d)/(\d\d)\(\w+\)(\d\d):(\d\d)~
+      Time.new(*["20#{$3}", $1, $2, $4, $5].map(&:to_i))
+    end
 
     def put
       if @is_op
